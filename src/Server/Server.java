@@ -11,7 +11,7 @@ import java.net.Socket;
 import java.util.ArrayList;
 
 public class Server {
-	final static int SERVER_PORT = 801;
+	final static int SERVER_PORT = 80;
 	private InputStream inputStream;
 	private OutputStream outputStream;
 	
