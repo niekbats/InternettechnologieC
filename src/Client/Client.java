@@ -1,6 +1,5 @@
 package Client;
 
-import java.io.BufferedOutputStream;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
@@ -12,7 +11,7 @@ import java.util.Scanner;
 
 public class Client {
 
-	final static int SERVER_PORT = 801;
+	final static int SERVER_PORT = 80;
 	final static String SERVER_ADDRESS = "localhost";
 	private InputStream inputStream;
 	private OutputStream outputStream;
