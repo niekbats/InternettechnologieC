@@ -17,6 +17,7 @@ public class Server {
 	
 	private static ArrayList<Socket> verbonden = new ArrayList<Socket>();
 	
+	@SuppressWarnings("resource")
 	Server() {
 		// Maak een socket aan om op clients te wachten
 		ServerSocket serverSocket = null;
@@ -70,8 +71,14 @@ while(true){
 						outputStream = verbonden.get(i).getOutputStream();
 						BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream));
 						String line = reader.readLine();
+						if(line==null){
+							break;
+						}
+						
 						PrintWriter writer = new PrintWriter(outputStream);
-						writer.println(line);
+						writer.println("<!doctype html\">\n" + "<html>\n" + "<head><title>Verhuurder</title></head>\n" + "<body>\n"
+								+ "<h1>Verhuurd: </h1>\n"
+								+ "<table style='100%'>\n<tr>\n<td>Naam</td>\n<td>Vierkante Meter</td>\n<td>HuurPrijs</td>\n<td>Plaats</td></tr>");
 						System.out.println("Data die wordt verstuurd: "+ line);
 						writer.flush();// vetelt het systeem om alle uistaande data te
 										// versturen
