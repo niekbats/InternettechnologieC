@@ -14,6 +14,7 @@ import java.io.PrintWriter;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.ArrayList;
+import java.util.Scanner;
 
 public class Server {
 	final static int SERVER_PORT = 80;
@@ -21,10 +22,24 @@ public class Server {
 	private OutputStream outputStream;
 
 	private static ArrayList<Socket> verbonden = new ArrayList<Socket>();
-
+	
+	private static ArrayList<String> beveiligdePaden = new ArrayList<String>();
+	
 	@SuppressWarnings("resource")
 	Server() {
-
+		//leest htacces uit
+		File htacces = new File(".htacces");
+		try {
+			Scanner htaccesScanner = new Scanner(htacces);
+			while(htaccesScanner.hasNextLine()) {
+				beveiligdePaden.add(htaccesScanner.nextLine());
+			}
+			System.out.println(beveiligdePaden);
+		} catch (FileNotFoundException e1) {
+			System.out.println(".htacces is niet gevonden");
+			e1.printStackTrace();
+		}
+		
 		ServerSocket serverSocket = null;
 
 		try {
@@ -64,9 +79,7 @@ public class Server {
 		public void run() {
 			String request = "";
 			while (!socket.isClosed()) {
-
 				try {
-
 					inputStream = socket.getInputStream();
 					outputStream = socket.getOutputStream();
 					BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream));
@@ -87,18 +100,21 @@ public class Server {
 						}
 					}
 
-					 if (request.contains("index.html")) {
-					 sendHTML(socket);
-					 } else if (request.contains("tijger.jpeg")) {
-					 sendPicture(socket);
-					 } else if (request.contains("style.ccs")) {
-					 sendCCS(socket);
-					 } else if (request.contains("halloworld.js")) {
-					 sendJS(socket);
-					 }
-					 else {
-					 notFound(socket);
-					 }
+					if (request.contains("index.html")) {
+						sendHTML(socket);
+					} else if (request.contains("tijger.jpeg")) {
+						sendPicture(socket);
+					} else if (request.contains("style.ccs")) {
+						sendCCS(socket);
+					} else if (request.contains("halloworld.js")) {
+						sendJS(socket);
+					} else if (request.contains("beveiligd.html")) {
+						if(beveiligdePaden.contains("beveiligd.html")) {
+							
+						}
+					} else {
+						notFound(socket);
+					}
 					socket.close();
 				}
 
@@ -106,9 +122,7 @@ public class Server {
 					// TODO Auto-generated catch block
 					e.printStackTrace();
 				}
-
 			}
-
 		}
 
 		public void sendPicture(Socket socket) {
