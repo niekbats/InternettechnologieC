@@ -110,7 +110,7 @@ public class Server {
 						sendJS(socket);
 					} else if (request.contains("beveiligd.html")) {
 						if(beveiligdePaden.contains("beveiligd.html")) {
-							
+							sendBeveiligd();
 						}
 					} else {
 						notFound(socket);
@@ -292,6 +292,28 @@ public class Server {
 			out.write("Connection: close\r\n");
 			out.write("\r\n");
 			out.write(content);
+			out.flush();
+		}
+
+		public void sendBeveiligd() {
+			
+			//zonder authenticatie meesturen
+			sendMissingAuthentication();
+			
+			//foute authenticatie meesturen
+			
+			//juiste authenticatie meesturen
+		}
+		
+		public void sendMissingAuthentication() {
+			PrintWriter out = new PrintWriter(outputStream);
+			out.write("HTTP/1.1 401 ACCES DENIED \r\n");
+			out.write("Date: Mon, 25 Okt 2015 13:00:00 GMT\r\n");
+//			out.write("Server: Apache/0.8.4\r\n");
+//			out.write("Content-Type: text/html\r\n");
+			out.write("Content-Length:" + 0 + "\r\n");
+			out.write("Connection: close\r\n");
+			out.write("\r\n");
 			out.flush();
 		}
 	}
