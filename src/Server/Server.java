@@ -38,7 +38,7 @@ public class Server {
 			serverSocket = new ServerSocket(SERVER_PORT);
 			System.out.println("Socket aangemaakt");
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
+			System.out.println("de server poort: " + SERVER_PORT + " is bezet");
 			e.printStackTrace();
 		}
 
@@ -49,7 +49,7 @@ public class Server {
 				verbonden.add(socket);
 				System.out.println(verbonden.size());
 				// Als er een verbinding tot stand is gebracht, start een nieuwe
-				// thread.
+				// ClientThread.
 				ClientThread ct = new ClientThread(socket);
 				System.out.println("Verbinding tot stand gebracht met client!");
 				ct.start();
