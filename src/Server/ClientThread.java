@@ -56,8 +56,10 @@ public class ClientThread extends Thread {
 				}
 				
 				//zolang het bericht niet beeindigt is word s reader.readline
+				String header = "";
 				while ((s = reader.readLine()) != null) {
 					System.out.println(s);
+					header = header + "\n" + s;
 					if (s.isEmpty()) {
 						break;
 					}
@@ -73,7 +75,15 @@ public class ClientThread extends Thread {
 					sendJS(socket);
 				} else if (request.contains("beveiligd.html")) {
 					if(beveiligdePaden.contains("beveiligd.html")) {
-						sendBeveiligd(socket);
+						System.out.println("de gestuurde request: ");
+						System.out.println(request);
+						System.out.println();
+						
+						System.out.println("de header is: ");
+						System.out.println(header);
+						System.out.println();
+						
+						sendBeveiligd(socket, header);
 					}
 				} else {
 					notFound(socket);
@@ -258,10 +268,13 @@ public class ClientThread extends Thread {
 		out.flush();
 	}
 
-	public void sendBeveiligd(Socket socket) {
+	public void sendBeveiligd(Socket socket, String header) {
 		
 		//zonder authenticatie meesturen
-		sendMissingAuthentication();
+		if(!header.contains("Authorization: Basic ")) {
+			sendMissingAuthentication();
+			return;
+		}
 		
 		//foute authenticatie meesturen
 		sendWrongAuthentication();
