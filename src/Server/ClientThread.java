@@ -14,13 +14,20 @@ import java.io.PrintWriter;
 import java.net.Socket;
 import java.util.ArrayList;
 
+import model.Gebruiker;
+
 public class ClientThread extends Thread {
 	private InputStream inputStream;
 	private OutputStream outputStream;
 	
 	private Socket socket;
 	
+	private static ArrayList<Gebruiker> gebruikers;
 	private static ArrayList<String> beveiligdePaden;
+	
+	public static void setGebruikers(ArrayList<Gebruiker> gebruikersLijst) {
+		gebruikers = gebruikersLijst;
+	}
 	
 	public static void setBeveiligdePaden(ArrayList<String> beveiligde) {
 		beveiligdePaden = beveiligde;
@@ -40,20 +47,22 @@ public class ClientThread extends Thread {
 
 				String s;
 				s = reader.readLine();
+				//blijft hier totdat er een keer geen null wordt ontvangen
 				if (s != null) {
 					request = s;
 					// request = s.substring(4,(s.length() -8));
 				} else {
 					break;
 				}
-
+				
+				//zolang het bericht niet beeindigt is word s reader.readline
 				while ((s = reader.readLine()) != null) {
 					System.out.println(s);
 					if (s.isEmpty()) {
 						break;
 					}
 				}
-
+				
 				if (request.contains("index.html")) {
 					sendHTML(socket);
 				} else if (request.contains("tijger.jpeg")) {
@@ -64,7 +73,7 @@ public class ClientThread extends Thread {
 					sendJS(socket);
 				} else if (request.contains("beveiligd.html")) {
 					if(beveiligdePaden.contains("beveiligd.html")) {
-						sendBeveiligd();
+						sendBeveiligd(socket);
 					}
 				} else {
 					notFound(socket);
@@ -249,25 +258,63 @@ public class ClientThread extends Thread {
 		out.flush();
 	}
 
-	public void sendBeveiligd() {
+	public void sendBeveiligd(Socket socket) {
 		
 		//zonder authenticatie meesturen
 		sendMissingAuthentication();
 		
 		//foute authenticatie meesturen
+		sendWrongAuthentication();
 		
 		//juiste authenticatie meesturen
+		PrintWriter out = new PrintWriter(outputStream);
+		out.write("HTTP/1.1 200 OK\r\n");
+		out.write("Date: Mon, 24 Okt 2015 13:00:00 GMT\r\n");
+		out.write("Server: Apache/0.8.4\r\n");
+		out.write("Content-Type: text/html\r\n");
+
+		StringBuilder contentBuilder = new StringBuilder();
+		try {
+			BufferedReader in = new BufferedReader(new FileReader("beveiligd.html"));
+			String str;
+			while ((str = in.readLine()) != null) {
+				contentBuilder.append(str);
+			}
+			in.close();
+		} catch (IOException e) {
+		}
+		String content = contentBuilder.toString();
+
+		out.write("Content-Length:" + content.length() + "\r\n");
+		out.write("Connection: close\r\n");
+		out.write("\r\n");
+		out.write(content);
+		System.out.println("Data die wordt verstuurd! ");
+		out.flush();
 	}
 	
 	public void sendMissingAuthentication() {
 		PrintWriter out = new PrintWriter(outputStream);
 		out.write("HTTP/1.1 401 ACCES DENIED \r\n");
 		out.write("Date: Mon, 25 Okt 2015 13:00:00 GMT\r\n");
-//		out.write("Server: Apache/0.8.4\r\n");
-//		out.write("Content-Type: text/html\r\n");
+		out.write("Server: Apache/0.8.4\r\n");
 		out.write("Content-Length:" + 0 + "\r\n");
 		out.write("Connection: close\r\n");
 		out.write("\r\n");
+		out.flush();
+	}
+	
+	public void sendWrongAuthentication() {
+		PrintWriter out = new PrintWriter(outputStream);
+		out.write("HTTP/1.1 401 ACCES DENIED \r\n");
+		out.write("Date: Mon, 25 Okt 2015 13:00:00 GMT\r\n");
+		out.write("Server: Apache/0.8.4\r\n");
+		out.write("Content-Type: text/html\r\n");
+		String content = "Error 401 Bad authentication gebruikersnaam of wachtwoord foutief";
+		out.write("Content-Length:" + content.length() + "\r\n");
+		out.write("Connection: close\r\n");
+		out.write("\r\n");
+		out.write(content);
 		out.flush();
 	}
 }
