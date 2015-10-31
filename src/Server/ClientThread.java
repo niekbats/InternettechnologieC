@@ -13,6 +13,7 @@ import java.io.OutputStream;
 import java.io.PrintWriter;
 import java.net.Socket;
 import java.util.ArrayList;
+import java.util.Base64;
 
 import model.Gebruiker;
 
@@ -276,6 +277,22 @@ public class ClientThread extends Thread {
 			return;
 		}
 		
+		String[] splitHeader = header.split("\n");
+		
+		for(int i = 0; i < splitHeader.length; i++) {
+			if(splitHeader[i].contains("Authorization: Basic ")) {
+				String encryptedInloggegevens = splitHeader[i].replaceFirst("Authorization: Basic ", "");
+				
+				//decryption magic
+				String decryptedInloggegevens = new String(Base64.getDecoder().decode(encryptedInloggegevens));
+				String[] naamWachtwoord = decryptedInloggegevens.split(":");
+				
+				System.out.println(decryptedInloggegevens);
+				
+				//lopen door alle gebruikers om een matchend naam wachtwoord paar te vinden
+				
+			}
+		}
 		//foute authenticatie meesturen
 		sendWrongAuthentication();
 		
