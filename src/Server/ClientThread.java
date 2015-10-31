@@ -286,41 +286,53 @@ public class ClientThread extends Thread {
 				//decryption magic
 				String decryptedInloggegevens = new String(Base64.getDecoder().decode(encryptedInloggegevens));
 				String[] naamWachtwoord = decryptedInloggegevens.split(":");
+				String naam = naamWachtwoord[0];
+				String wachtwoord = naamWachtwoord[1];
 				
 				System.out.println(decryptedInloggegevens);
 				
-				//lopen door alle gebruikers om een matchend naam wachtwoord paar te vinden
-				
+				//loopen door alle gebruikers om een matchend naam wachtwoord paar te vinden
+				for(Gebruiker g : gebruikers) {
+					if(g.getGebruikersNaam().equals(naam)) {
+						if(g.getWachtwoord().equals(wachtwoord)) {
+							//juiste authenticatie meesturen
+							PrintWriter out = new PrintWriter(outputStream);
+							out.write("HTTP/1.1 200 OK\r\n");
+							out.write("Date: Mon, 24 Okt 2015 13:00:00 GMT\r\n");
+							out.write("Server: Apache/0.8.4\r\n");
+							out.write("Content-Type: text/html\r\n");
+
+							StringBuilder contentBuilder = new StringBuilder();
+							try {
+								BufferedReader in = new BufferedReader(new FileReader("beveiligd.html"));
+								String str;
+								while ((str = in.readLine()) != null) {
+									contentBuilder.append(str);
+								}
+								in.close();
+							} catch (IOException e) {
+							}
+							String content = contentBuilder.toString();
+
+							out.write("Content-Length:" + content.length() + "\r\n");
+							out.write("Connection: close\r\n");
+							out.write("\r\n");
+							out.write(content);
+							System.out.println("Data die wordt verstuurd! ");
+							out.flush();
+						} else {
+							//correcte naam maar fout wachtwoord
+							sendWrongAuthentication();
+							return;
+						}
+					}
+				}
 			}
 		}
 		//foute authenticatie meesturen
 		sendWrongAuthentication();
 		
-		//juiste authenticatie meesturen
-		PrintWriter out = new PrintWriter(outputStream);
-		out.write("HTTP/1.1 200 OK\r\n");
-		out.write("Date: Mon, 24 Okt 2015 13:00:00 GMT\r\n");
-		out.write("Server: Apache/0.8.4\r\n");
-		out.write("Content-Type: text/html\r\n");
-
-		StringBuilder contentBuilder = new StringBuilder();
-		try {
-			BufferedReader in = new BufferedReader(new FileReader("beveiligd.html"));
-			String str;
-			while ((str = in.readLine()) != null) {
-				contentBuilder.append(str);
-			}
-			in.close();
-		} catch (IOException e) {
-		}
-		String content = contentBuilder.toString();
-
-		out.write("Content-Length:" + content.length() + "\r\n");
-		out.write("Connection: close\r\n");
-		out.write("\r\n");
-		out.write(content);
-		System.out.println("Data die wordt verstuurd! ");
-		out.flush();
+		
 	}
 	
 	public void sendMissingAuthentication() {
