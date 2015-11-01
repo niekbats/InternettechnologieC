@@ -2,7 +2,9 @@ package Server;
 
 import java.io.BufferedReader;
 import java.io.DataInputStream;
+import java.io.DataOutputStream;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.FileReader;
@@ -87,18 +89,17 @@ public class Server {
 						}
 					}
 
-					 if (request.contains("index.html")) {
-					 sendHTML(socket);
-					 } else if (request.contains("tijger.jpeg")) {
-					 sendPicture(socket);
-					 } else if (request.contains("style.ccs")) {
-					 sendCCS(socket);
-					 } else if (request.contains("halloworld.js")) {
-					 sendJS(socket);
-					 }
-					 else {
-					 notFound(socket);
-					 }
+					if (request.contains("index.html")) {
+						sendHTML(socket);
+					} else if (request.contains("tijger.jpeg")) {
+						sendPicture(socket);
+					} else if (request.contains("style.ccs")) {
+						sendCCS(socket);
+					} else if (request.contains("halloworld.js")) {
+						sendJS(socket);
+					} else {
+						notFound(socket);
+					}
 					socket.close();
 				}
 
@@ -115,33 +116,29 @@ public class Server {
 
 			PrintWriter out = new PrintWriter(outputStream);
 			out.write("HTTP/1.1 200 OK\r\n");
-			out.write("Date: Mon, 24 Okt 2015 13:00:00 GMT\r\n");
+			out.write("Date: Thu, 29 Okt 2015 13:00:00 GMT\r\n");
 			out.write("Server: Apache/0.8.4\r\n");
 			out.write("Content-Type: image/jpeg\r\n");
-
-			DataInputStream dis = null;
+			
+			File file = new File("tijger.jpeg");
+			DataOutputStream dos = null;
 			try {
-				dis = new DataInputStream(socket.getInputStream());
+				dos = new DataOutputStream(socket.getOutputStream());
 			} catch (IOException e) {
 				System.out.println("Datainputstream");
 			}
-			File file = new File("tijger.jpeg");
+			
 
-			FileOutputStream fos = null;
+			FileInputStream fos = null;
 			try {
-				fos = new FileOutputStream(file);
+				fos = new FileInputStream(file);
 			} catch (FileNotFoundException e) {
 				System.out.println("FileoutputSTream" + file + " <-- text");
 			}
-			int arrylength = 0;
-			try {
-				arrylength = dis.readInt();
-			} catch (IOException e) {
-				System.out.println("ReadInt");
-			}
+			int arrylength = dos.size();
 			byte[] b = new byte[arrylength];
 			try {
-				dis.readFully(b);
+				dos.write(b);
 			} catch (IOException e) {
 				System.out.println("Read dis.b");
 			}
@@ -149,12 +146,11 @@ public class Server {
 			out.write("Content-Length:" + b.length + "\r\n");
 			out.write("Connection: close\r\n");
 			out.write("\r\n");
-			try {
-				fos.write(b, 0, b.length);
-			} catch (IOException e) {
-				System.out.println("fos.write niet gelukt");
-			}
+			
 			System.out.println("Plaatje wordt verstuurd! ");
+
+
+			// finaly
 			out.flush();
 
 		}
