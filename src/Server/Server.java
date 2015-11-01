@@ -1,10 +1,11 @@
 package Server;
 
+import java.io.BufferedInputStream;
 import java.io.BufferedReader;
-import java.io.DataInputStream;
+import java.io.DataOutputStream;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStream;
@@ -20,7 +21,9 @@ import java.util.Scanner;
 import model.Gebruiker;
 
 public class Server {
+	// HTTP poort
 	final static int SERVER_PORT = 80;
+	// Wat arrylists
 	private static ArrayList<Socket> verbonden = new ArrayList<Socket>();
 	private static ArrayList<String> beveiligdePaden = new ArrayList<String>();
 	private static ArrayList<Gebruiker> gebruikers = new ArrayList<Gebruiker>();
@@ -34,7 +37,7 @@ public class Server {
 			while (htaccesScanner.hasNextLine()) {
 				beveiligdePaden.add(htaccesScanner.nextLine());
 			}
-			System.out.println(beveiligdePaden);
+		
 		} catch (FileNotFoundException e1) {
 			System.out.println(".htacces is niet gevonden");
 			e1.printStackTrace();
@@ -61,7 +64,6 @@ public class Server {
 				// Als er een verbinding tot stand is gebracht, start een nieuwe
 				// ClientThread.
 				ClientThread ct = new ClientThread(socket);
-				System.out.println("Verbinding tot stand gebracht met client!");
 				ct.start();
 			} catch (IOException e) {
 				// TODO Auto-generated catch block
@@ -90,7 +92,7 @@ public class Server {
 		public ClientThread(Socket socket) {
 			this.socket = socket;
 		}
-
+// Run methode van de server, deze gaat door totdat de socket dichtis
 		public void run() {
 			String request = "";
 			while (!socket.isClosed()) {
@@ -104,7 +106,7 @@ public class Server {
 					// blijft hier totdat er een keer geen null wordt ontvangen
 					if (s != null) {
 						request = s;
-						
+						System.out.println("RESQUEST =" + request);
 					} else {
 						break;
 					}
@@ -119,7 +121,7 @@ public class Server {
 							break;
 						}
 					}
-
+// Kijk of de request iets bevat bijvoorbeld index.html dan weet de erver dat die de index html moet opgeven
 					if (request.contains("index.html")) {
 						sendHTML(socket);
 					} else if (request.contains("tijger.jpeg")) {
@@ -139,6 +141,18 @@ public class Server {
 							System.out.println();
 
 							sendBeveiligd(socket, header);
+						}else if (request.contains("/")){
+							
+							int aantal =0;
+							for(int i =0 ; i < request.length() ; i++){
+								
+								if(request.substring(i, i+1).contains("/")){
+									aantal++;
+								}
+							}
+							if(aantal ==1){
+								sendRoot(socket);
+							}
 						}
 					} else {
 						notFound(socket);
@@ -152,7 +166,11 @@ public class Server {
 				}
 			}
 		}
-
+/**
+ * @author Ernst
+ * @param socket
+ * Verzend een plaatje
+ */
 		public void sendPicture(Socket socket) {
 
 			PrintWriter out = new PrintWriter(outputStream);
@@ -161,46 +179,35 @@ public class Server {
 			out.write("Server: Apache/0.8.4\r\n");
 			out.write("Content-Type: image/jpeg\r\n");
 
-			DataInputStream dis = null;
-			try {
-				dis = new DataInputStream(socket.getInputStream());
-			} catch (IOException e) {
-				System.out.println("Datainputstream");
-			}
-			File file = new File("tijger.jpeg");
+			File file = new File("tijger.jpg");
+			try (InputStream is = new BufferedInputStream(new FileInputStream(file));
+			        DataOutputStream dos = new DataOutputStream(socket.getOutputStream());) {
+			    dos.writeLong(file.length()); // <-- remember to read a long on server.
+			    int val;
+			    while ((val = is.read()) != -1) {
+			        dos.write(val);
+			    }
+			 
+			
 
-			FileOutputStream fos = null;
-			try {
-				fos = new FileOutputStream(file);
-			} catch (FileNotFoundException e) {
-				System.out.println("FileoutputSTream" + file + " <-- text");
-			}
-			int arrylength = 0;
-			try {
-				arrylength = dis.readInt();
-			} catch (IOException e) {
-				System.out.println("ReadInt");
-			}
-			byte[] b = new byte[arrylength];
-			try {
-				dis.readFully(b);
-			} catch (IOException e) {
-				System.out.println("Read dis.b");
-			}
-
-			out.write("Content-Length:" + b.length + "\r\n");
+			out.write("Content-Length:" + file.length() + "\r\n");
 			out.write("Connection: close\r\n");
 			out.write("\r\n");
-			try {
-				fos.write(b, 0, b.length);
-			} catch (IOException e) {
-				System.out.println("fos.write niet gelukt");
-			}
+			
 			System.out.println("Plaatje wordt verstuurd! ");
+			dos.flush();
 			out.flush();
-
+			
+			} catch ( IOException e) {
+				System.out.println("Er ging iets verkeerd!");
+			}
 		}
-
+/**
+ * @author Ernst
+ * @param socket De socket waar die mee verbonden is
+ * 
+ * Deze methode zend een html pagina , deze wordt gelezen door BufferedReader en verwerkt door de String builder
+ */
 		public void sendHTML(Socket socket) {
 			PrintWriter out = new PrintWriter(outputStream);
 			out.write("HTTP/1.1 200 OK\r\n");
@@ -227,7 +234,11 @@ public class Server {
 			System.out.println("Data die wordt verstuurd! ");
 			out.flush();
 		}
-
+/**
+ * @author Ernst
+ * @param socket 
+ * Zend een CCS bestand
+ */
 		public void sendCCS(Socket socket) {
 			PrintWriter out = new PrintWriter(outputStream);
 			out.write("HTTP/1.1 200 OK\r\n");
@@ -254,7 +265,11 @@ public class Server {
 			System.out.println("CCS wordt verstuurd! ");
 			out.flush();
 		}
-
+/**
+ * @author Ernst
+ * @param socket
+ * Zend een JS
+ */
 		public void sendJS(Socket socket) {
 			PrintWriter out = new PrintWriter(outputStream);
 			out.write("HTTP/1.1 200 OK\r\n");
@@ -281,7 +296,11 @@ public class Server {
 			System.out.println("JS wordt verstuurd! ");
 			out.flush();
 		}
-
+/**
+ * @author Ernst
+ * @param socket
+ * Zend the root
+ */
 		public void sendRoot(Socket socket) {
 			PrintWriter out = new PrintWriter(outputStream);
 			out.write("HTTP/1.1 200 OK\r\n");
@@ -308,7 +327,10 @@ public class Server {
 			System.out.println("ROOT wordt verstuurd! ");
 			out.flush();
 		}
-
+/**
+ * @author Ernst
+ * @param socket
+ */
 		public void notFound(Socket socket) {
 			PrintWriter out = new PrintWriter(outputStream);
 			out.write("HTTP/1.1 404 Not Found\r\n");
@@ -322,7 +344,11 @@ public class Server {
 			out.write(content);
 			out.flush();
 		}
-
+/**
+ * @author Niek
+ * @param socket
+ * @param header
+ */
 		public void sendBeveiligd(Socket socket, String header) {
 
 			// zonder authenticatie meesturen
@@ -388,18 +414,24 @@ public class Server {
 			sendWrongAuthentication();
 
 		}
-
+/**
+ * @author Niek
+ */
 		public void sendMissingAuthentication() {
 			PrintWriter out = new PrintWriter(outputStream);
 			out.write("HTTP/1.1 401 ACCES DENIED \r\n");
 			out.write("Date: Mon, 25 Okt 2015 13:00:00 GMT\r\n");
 			out.write("Server: Apache/0.8.4\r\n");
-			out.write("Content-Length:" + 0 + "\r\n");
+			String content = "Error 401 Geheeft geen toegang, log in!";
+			out.write("Content-Length:" + content.length() + "\r\n");
 			out.write("Connection: close\r\n");
 			out.write("\r\n");
+			out.write(content);
 			out.flush();
 		}
-
+/**
+ * @author Niek
+ */
 		public void sendWrongAuthentication() {
 			PrintWriter out = new PrintWriter(outputStream);
 			out.write("HTTP/1.1 401 ACCES DENIED \r\n");
